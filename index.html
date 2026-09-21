@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Go Chat</title>
+</head>
+<body>
+
+    <h1>Go Chat</h1>
+
+    <input id="message" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        const socket = new WebSocket("ws://localhost:8080/ws");
+
+        function sendMessage() {
+            const message = document.getElementById("message").value;
+            socket.send(message);
+        }
+    </script>
+
+</body>
+</html>
