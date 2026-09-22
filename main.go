@@ -13,6 +13,7 @@ var upgrader = websocket.Upgrader{
 }
 func main() {
 	hub:=NewHub()
+	go hub.Run()
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/ws",wsHandler(hub))
 	http.ListenAndServe(":8080", nil)
@@ -36,7 +37,7 @@ func wsHandler(hub *Hub) http.HandlerFunc{
 	 if err!=nil{
 	    return
 	 }
-	 hub.BroadCast(msg)
+	 hub.broadcast<-msg
 	}
   }
 }
