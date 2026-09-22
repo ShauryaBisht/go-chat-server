@@ -6,15 +6,30 @@
 <body>
 
     <h1>Go Chat</h1>
-
+    <input id="username" placeholder="Username">
+    <button onclick="connect()">Connect</button>
+    <br></br>
     <input id="message" placeholder="Type a message">
     <button onclick="sendMessage()">Send</button>
-
+    <div id="messages"></div>
     <script>
-        const socket = new WebSocket("ws://localhost:8080/ws");
+        let socket
+        function connect(){
+            const username=document.getElementById("username").value
+            socket =new WebSocket(
+                "ws://localhost:8080/ws?username=" + encodeURIComponent(username)
+            )
+            socket.onmessage=function(event){
+                const messages=document.getElementById("messages")
+                const message=document.createElement("p")
+                message.textContent = event.data;
 
+                messages.appendChild(message);
+            }
+        }
         function sendMessage() {
             const message = document.getElementById("message").value;
+
             socket.send(message);
         }
     </script>

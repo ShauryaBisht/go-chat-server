@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	
 	// "io"
 	"net/http"
 
@@ -36,7 +36,7 @@ func wsHandler(hub *Hub) http.HandlerFunc{
 	 if err!=nil{
 	    return
 	 }
-	 fmt.Println(string(msg))
+	 hub.BroadCast(msg)
 	}
   }
 }

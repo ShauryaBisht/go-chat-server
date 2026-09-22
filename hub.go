@@ -30,3 +30,10 @@ func (h *Hub)Unregister(username string){
 	   delete(h.clients,username)
 	   h.mu.Unlock()
 }
+func (h* Hub) BroadCast(message []byte){
+	h.mu.Lock()
+	for _,conn:=range h.clients{
+           conn.WriteMessage(websocket.TextMessage,message)
+	}
+	h.mu.Unlock()
+}
