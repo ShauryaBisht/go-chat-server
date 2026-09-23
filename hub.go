@@ -5,21 +5,30 @@ import (
 
 	"github.com/gorilla/websocket"
 )
+type Client struct{
+	conn *websocket.Conn
+	send chan []byte
+}
 type Hub struct{
-	clients map[string]*websocket.Conn
+	clients map[string]*Client
 	mu sync.Mutex
 	broadcast chan []byte
 }
 
-func (h *Hub) Register(username string, con *websocket.Conn){
+func (h *Hub) Register(username string, con *websocket.Conn) *Client{
+	   client:=&Client{
+		 conn:con,
+		 send: make(chan []byte),
+	   }
         h.mu.Lock()
-		h.clients[username]=con
+		h.clients[username]=client
 		h.mu.Unlock()
+		return client
 }
 
 func NewHub() *Hub{
     ch:=make(chan []byte)
-	clients:=make(map[string]*websocket.Conn)
+	clients:=make(map[string]*Client)
 	hub:=&Hub{
 		clients: clients,
 		broadcast: ch,
@@ -37,9 +46,16 @@ func (h* Hub) Run(){
 	for{
 		message:=<-h.broadcast
 		h.mu.Lock()
-		for _,conn:= range h.clients{
-			conn.WriteMessage(websocket.TextMessage,message)
+		for _,client:= range h.clients{
+			client.send<-message
 		}
 		h.mu.Unlock()
+	}
+}
+
+func (c *Client) writePump(){
+	for{
+	message:=<-c.send
+	c.conn.WriteMessage(websocket.TextMessage,message)
 	}
 }

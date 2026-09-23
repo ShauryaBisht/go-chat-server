@@ -29,7 +29,8 @@ func wsHandler(hub *Hub) http.HandlerFunc{
 	    return
 	 }
 	 username:=r.URL.Query().Get("username")
-	 hub.Register(username,conn)
+	 client:=hub.Register(username,conn)
+	 go client.writePump()
 	 defer hub.Unregister(username)
 	 defer conn.Close()
 	 for {
