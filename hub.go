@@ -8,6 +8,7 @@ import (
 type Client struct{
 	conn *websocket.Conn
 	send chan []byte
+	done chan struct{}
 }
 type Hub struct{
 	clients map[string]*Client
@@ -19,6 +20,7 @@ func (h *Hub) Register(username string, con *websocket.Conn) *Client{
 	   client:=&Client{
 		 conn:con,
 		 send: make(chan []byte),
+		 done: make(chan struct{}),
 	   }
         h.mu.Lock()
 		h.clients[username]=client
@@ -46,16 +48,27 @@ func (h* Hub) Run(){
 	for{
 		message:=<-h.broadcast
 		h.mu.Lock()
+		clients:=make([]*Client,0,len(h.clients))
 		for _,client:= range h.clients{
-			client.send<-message
+			clients=append(clients,client)
 		}
 		h.mu.Unlock()
+		for _,client:=range clients{
+            client.send<-message
+		}
 	}
 }
 
 func (c *Client) writePump(){
 	for{
-	message:=<-c.send
-	c.conn.WriteMessage(websocket.TextMessage,message)
+		select{
+		  case message:=<-c.send:
+	      err:=c.conn.WriteMessage(websocket.TextMessage,message)
+		  if(err!=nil){
+			return
+		  }
+
+		  case <-c.done:return
+		}
 	}
 }
