@@ -9,18 +9,24 @@ type Client struct{
 	conn *websocket.Conn
 	send chan []byte
 	done chan struct{}
+	room string
+}
+type Message struct {
+    sender  *Client
+    message []byte
 }
 type Hub struct{
 	clients map[string]*Client
 	mu sync.Mutex
-	broadcast chan []byte
+    broadcast chan Message
 }
 
-func (h *Hub) Register(username string, con *websocket.Conn) *Client{
+func (h *Hub) Register(username string, con *websocket.Conn,room string) *Client{
 	   client:=&Client{
 		 conn:con,
 		 send: make(chan []byte),
 		 done: make(chan struct{}),
+		 room:room,
 	   }
         h.mu.Lock()
 		h.clients[username]=client
@@ -29,7 +35,7 @@ func (h *Hub) Register(username string, con *websocket.Conn) *Client{
 }
 
 func NewHub() *Hub{
-    ch:=make(chan []byte)
+    ch:=make(chan Message)
 	clients:=make(map[string]*Client)
 	hub:=&Hub{
 		clients: clients,
@@ -54,7 +60,9 @@ func (h* Hub) Run(){
 		}
 		h.mu.Unlock()
 		for _,client:=range clients{
-            client.send<-message
+			if(client.room==message.sender.room){
+            client.send<-message.message
+			}
 		}
 	}
 }

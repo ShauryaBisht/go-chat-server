@@ -29,7 +29,8 @@ func wsHandler(hub *Hub) http.HandlerFunc{
 	    return
 	 }
 	 username:=r.URL.Query().Get("username")
-	 client:=hub.Register(username,conn)
+	 room:=r.URL.Query().Get("room")
+	 client:=hub.Register(username,conn,room)
 	 go client.writePump()
 	 defer close(client.done)
 	 defer hub.Unregister(username)
@@ -39,7 +40,10 @@ func wsHandler(hub *Hub) http.HandlerFunc{
 	 if err!=nil{
 	    return
 	 }
-	 hub.broadcast<-msg
+	 hub.broadcast<-Message{
+		sender: client,
+		message: msg,
+	 }
 	}
   }
 }
