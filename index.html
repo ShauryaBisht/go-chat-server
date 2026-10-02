@@ -34,13 +34,17 @@
             );
 
             socket.onmessage = function(event) {
-                const messages = document.getElementById("messages");
+             const data=JSON.parse(event.data)
+             const messages = document.getElementById("messages");
+             const message = document.createElement("p");
 
-                const message = document.createElement("p");
-                message.textContent = event.data;
-
-                messages.appendChild(message);
-            };
+             message.textContent = data.message;
+             if (data.type === "system") {
+              message.style.color = "gray";
+              message.style.fontStyle = "italic";
+            }
+             messages.appendChild(message);
+};
         }
 
         function sendMessage() {

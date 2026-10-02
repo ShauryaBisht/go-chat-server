@@ -31,6 +31,11 @@ func wsHandler(hub *Hub) http.HandlerFunc{
 	 username:=r.URL.Query().Get("username")
 	 room:=r.URL.Query().Get("room")
 	 client:=hub.Register(username,conn,room)
+	 hub.broadcast<-Message{
+		sender: client,
+		message:[]byte(username+ " joined "+room),
+		typeof: "system",
+	 }
 	 go client.writePump()
 	 defer close(client.done)
 	 defer hub.Unregister(username)
