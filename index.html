@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Go Chat</title>
 </head>
+
 <body>
 
     <h1>Go Chat</h1>
@@ -20,7 +22,7 @@
     <button onclick="sendMessage()">Send</button>
 
     <div id="messages"></div>
-    
+
     <script>
         let socket;
 
@@ -34,34 +36,47 @@
                 "&room=" +
                 encodeURIComponent(room)
             );
-            socket.onopen = function() {
-              document.getElementById("status").textContent = "Connected";
+            socket.onopen = function () {
+                document.getElementById("status").textContent = "Connected";
             }
 
-            socket.onclose = function() {
-              document.getElementById("status").textContent = "Disconnected";
-            } 
-            socket.onmessage = function(event) {
-             const data=JSON.parse(event.data)
-             if(data.type==="error"){
-                alert(data.message)
-                return
-             }
-             const messages = document.getElementById("messages");
-             const message = document.createElement("p");
-
-             message.textContent = data.message;
-             if (data.type === "system") {
-              message.style.color = "gray";
-              message.style.fontStyle = "italic";
+            socket.onclose = function () {
+                document.getElementById("status").textContent = "Disconnected";
             }
-             messages.appendChild(message);
-};
+            socket.onmessage = function (event) {
+                const data = JSON.parse(event.data)
+                if (data.type === "error") {
+                    alert(data.message)
+                    return
+                }
+                const messages = document.getElementById("messages");
+                const messageElement = document.createElement("div");
+                if (data.type === "system") {
+                    messageElement.textContent = data.message
+                    messageElement.style.color = "gray"
+                    messageElement.style.fontStyle = "italic"
+                }
+                else {
+                    const sender = document.createElement("strong");
+                    sender.textContent = data.sender + ": ";
+
+                    const messageText = document.createElement("span");
+                    messageText.textContent = data.message;
+                    const timestamp = document.createElement("small");
+                    timestamp.textContent = " " + data.timestamp;
+                    timestamp.style.color = "gray";
+                    timestamp.style.marginLeft = "10px";
+                    messageElement.appendChild(sender);
+                    messageElement.appendChild(messageText);
+                    messageElement.appendChild(timestamp);
+                }
+                messages.appendChild(messageElement);
+            };
         }
         function leaveRoom() {
-         if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.close();
-         }
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
         }
 
         function sendMessage() {
@@ -72,4 +87,5 @@
     </script>
 
 </body>
+
 </html>

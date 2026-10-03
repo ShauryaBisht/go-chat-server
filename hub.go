@@ -5,12 +5,14 @@ import (
 	"sync"
     "errors"
 	"github.com/gorilla/websocket"
+	"time"
 )
 type Client struct{
 	conn *websocket.Conn
 	done chan struct{}
 	room string
 	send chan OutgoingMessage
+	Username string
 }
 type Message struct {
     sender  *Client
@@ -20,6 +22,8 @@ type Message struct {
 type OutgoingMessage struct {
     Message string `json:"message"`
     Type    string `json:"type"`
+	Sender string  `json:"sender"`
+	Timestamp string `json:"timestamp"`
 }
 
 type Hub struct{
@@ -34,6 +38,7 @@ func (h *Hub) Register(username string, con *websocket.Conn,room string) (*Clien
 		 send: make(chan OutgoingMessage),
 		 done: make(chan struct{}),
 		 room:room,
+		 Username: username,
 	   }
         h.mu.Lock()
 		if _,exists:=h.clients[username];exists{
@@ -57,7 +62,11 @@ func NewHub() *Hub{
 
 func (h *Hub)Unregister(username string){
        h.mu.Lock()
-	   client:=h.clients[username]
+	   client,exists:=h.clients[username]
+	   if(!exists){
+		h.mu.Unlock()
+		return
+	   }
 	   delete(h.clients,username)
 	    h.mu.Unlock()
 	   h.broadcast<-Message{
@@ -81,6 +90,8 @@ func (h* Hub) Run(){
             client.send<-OutgoingMessage{
 				Message: string(message.message),
 				Type: message.typeof,
+				Sender:message.sender.Username,
+				Timestamp: time.Now().Format("03:04 PM"),
 			}
 			}
 		}
