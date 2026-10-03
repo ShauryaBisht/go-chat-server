@@ -11,6 +11,8 @@
     <input id="room" placeholder="Room">
 
     <button onclick="connect()">Connect</button>
+    <button onclick="leaveRoom()">Leave Room</button>
+    <p id="status">Disconnected</p>
 
     <br><br>
 
@@ -18,7 +20,7 @@
     <button onclick="sendMessage()">Send</button>
 
     <div id="messages"></div>
-
+    
     <script>
         let socket;
 
@@ -32,9 +34,19 @@
                 "&room=" +
                 encodeURIComponent(room)
             );
+            socket.onopen = function() {
+              document.getElementById("status").textContent = "Connected";
+            }
 
+            socket.onclose = function() {
+              document.getElementById("status").textContent = "Disconnected";
+            } 
             socket.onmessage = function(event) {
              const data=JSON.parse(event.data)
+             if(data.type==="error"){
+                alert(data.message)
+                return
+             }
              const messages = document.getElementById("messages");
              const message = document.createElement("p");
 
@@ -45,6 +57,11 @@
             }
              messages.appendChild(message);
 };
+        }
+        function leaveRoom() {
+         if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.close();
+         }
         }
 
         function sendMessage() {

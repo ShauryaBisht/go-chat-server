@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"sync"
-
+    "errors"
 	"github.com/gorilla/websocket"
 )
 type Client struct{
@@ -28,7 +28,7 @@ type Hub struct{
     broadcast chan Message
 }
 
-func (h *Hub) Register(username string, con *websocket.Conn,room string) *Client{
+func (h *Hub) Register(username string, con *websocket.Conn,room string) (*Client,error){
 	   client:=&Client{
 		 conn:con,
 		 send: make(chan OutgoingMessage),
@@ -36,9 +36,13 @@ func (h *Hub) Register(username string, con *websocket.Conn,room string) *Client
 		 room:room,
 	   }
         h.mu.Lock()
+		if _,exists:=h.clients[username];exists{
+			h.mu.Unlock()
+			return nil,errors.New("Username already taken")
+		}
 		h.clients[username]=client
 		h.mu.Unlock()
-		return client
+		return client,nil
 }
 
 func NewHub() *Hub{
@@ -84,6 +88,7 @@ func (h* Hub) Run(){
 }
 
 func (c *Client) writePump(){
+	defer c.conn.Close()
 	for{
 		select{
 		  case message:=<-c.send:

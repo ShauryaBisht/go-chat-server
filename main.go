@@ -1,8 +1,9 @@
 package main
 
 import (
-	
+
 	// "io"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -30,16 +31,26 @@ func wsHandler(hub *Hub) http.HandlerFunc{
 	 }
 	 username:=r.URL.Query().Get("username")
 	 room:=r.URL.Query().Get("room")
-	 client:=hub.Register(username,conn,room)
+	 client,err:=hub.Register(username,conn,room)
+	 if(err!=nil){
+		response:=OutgoingMessage{
+			Message: err.Error(),
+			Type: "error",
+		}
+        data,_:=json.Marshal(response)
+		conn.WriteMessage(websocket.TextMessage,data)
+		conn.Close()
+		return
+	 }
 	 hub.broadcast<-Message{
 		sender: client,
 		message:[]byte(username+ " joined "+room),
 		typeof: "system",
 	 }
 	 go client.writePump()
-	 defer close(client.done)
-	 defer hub.Unregister(username)
 	 defer conn.Close()
+     defer hub.Unregister(username)
+     defer close(client.done)
 	 for {
 	 _,msg,err:=conn.ReadMessage()
 	 if err!=nil{
